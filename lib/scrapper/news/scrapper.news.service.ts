@@ -6,41 +6,40 @@ import { NewsItemDto } from './scrapper.news.dto';
 @Injectable()
 export class NewsScrapperService implements OnModuleInit, OnModuleDestroy {
   private browser: Browser | null = null;
-  private readonly HN_URL = 'https://news.ycombinator.com/';
+  private readonly HACKER_NEWS_URL = 'https://news.ycombinator.com/';
 
   async onModuleInit(): Promise<void> {
     try {
       this.browser = await puppeteer.launch({ headless: true });
-      console.log('✅ Puppeteer browser launched for Hacker News scraping');
+      console.log('Puppeteer browser launched for Hacker News scraping');
     } catch (error) {
-      console.error('❌ Failed to launch Puppeteer:', error);
+      console.error('Failed to launch Puppeteer:', error);
     }
   }
 
   async onModuleDestroy(): Promise<void> {
     if (this.browser) {
       await this.browser.close();
-      console.log('🛑 Puppeteer browser closed for Hacker News scraping');
+      console.log('Puppeteer browser closed for Hacker News scraping');
     }
   }
 
-  // Schedule the scraping job to run every hour
-  // @Cron(CronExpression.EVERY_HOUR)
+  // @Cron(CronExpression.EVERY_HOUR)// In case of scheduling
   async scrapeNews(): Promise<NewsItemDto[]> {
     let result = [] as NewsItemDto[];
 
     if (!this.browser) {
-      console.error('❌ Browser is not initialized');
+      console.error('Browser is not initialized');
       return result;
     }
 
     const page: Page = await this.browser.newPage();
 
     try {
-      console.log(`🔍 Navigating to Hacker News: ${this.HN_URL}`);
-      await page.goto(this.HN_URL, { waitUntil: 'networkidle2' });
+      console.log(`Navigating to Hacker News: ${this.HACKER_NEWS_URL}`);
+      await page.goto(this.HACKER_NEWS_URL, { waitUntil: 'networkidle2' });
 
-      // Extract news items.
+      // Extract news items....
       // Each news item is contained in a <tr> element with class "athing".
       // The title link is contained within an element with either the "storylink" class
       // or, more recently, within a ".titleline > a" element.
@@ -59,14 +58,14 @@ export class NewsScrapperService implements OnModuleInit, OnModuleDestroy {
         }),
       );
       result = newsItems || [];
-      console.log('✅ Scraped Hacker News items:', newsItems?.length);
+      console.log('Scraped Hacker News items:', newsItems?.length);
       return result;
-      // Here, you might want to store the news items in a database or further process them.
+      // TODO : Save in db
     } catch (error) {
-      console.error('❌ Error scraping Hacker News:', error);
+      console.error('Error scraping Hacker News:', error);
     } finally {
       await page.close();
-      console.log('🔒 Page closed after scraping');
+      console.log('Page closed after scraping');
     }
 
     return result;
