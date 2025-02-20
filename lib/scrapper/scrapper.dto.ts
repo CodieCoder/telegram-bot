@@ -1,3 +1,4 @@
-export enum ScrapTypeDto {
+export enum ScrapTypeEnum {
   News = 'News',
+  Jobs = 'Jobs',
 }

@@ -7,8 +7,8 @@ import { TelegramBotModule } from 'lib/telegram/bot/bot.module';
 import { TelegramBotService } from 'lib/telegram/bot/bot.service';
 import { HttpModule } from '@nestjs/axios';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ScrapperModule } from 'lib/scrapper/news/scapper.news.module';
-import { NewsScrapperService } from 'lib/scrapper/news/scrapper.news.service';
+import { ScrapperModule } from 'lib/scrapper/scrapper.module';
+import { ScrapperService } from 'lib/scrapper/scrapper.service';
 
 @Module({
   imports: [
@@ -21,6 +21,6 @@ import { NewsScrapperService } from 'lib/scrapper/news/scrapper.news.service';
     ScrapperModule,
   ],
   controllers: [AppController],
-  providers: [AppService, TelegramBotService, NewsScrapperService],
+  providers: [AppService, TelegramBotService, ScrapperService],
 })
 export class AppModule {}

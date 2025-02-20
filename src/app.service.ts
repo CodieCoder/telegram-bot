@@ -12,4 +12,8 @@ export class AppService {
   public telegramBotHandler(body: any) {
     return this.telegramBotService.handleMessage(body);
   }
+
+  public sendToMany(chatIds: string[], text: string) {
+    return this.telegramBotService.sendToMany(chatIds, text);
+  }
 }

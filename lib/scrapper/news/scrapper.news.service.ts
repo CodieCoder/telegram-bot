@@ -1,12 +1,12 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { NewsItemDto } from './scrapper.news.dto';
+import { ScrapperNewsDto } from './scrapper.news.dto';
 
 @Injectable()
-export class NewsScrapperService implements OnModuleInit, OnModuleDestroy {
+export class ScrapperForNewsService implements OnModuleInit, OnModuleDestroy {
   private browser: Browser | null = null;
-  private readonly HACKER_NEWS_URL = 'https://news.ycombinator.com/';
+  private readonly HACKER_NEWS_URL = 'https://news.ycombinator.com/news';
 
   async onModuleInit(): Promise<void> {
     try {
@@ -25,8 +25,8 @@ export class NewsScrapperService implements OnModuleInit, OnModuleDestroy {
   }
 
   // @Cron(CronExpression.EVERY_HOUR)// In case of scheduling
-  async scrapeNews(): Promise<NewsItemDto[]> {
-    let result = [] as NewsItemDto[];
+  async scrape(): Promise<ScrapperNewsDto[]> {
+    let result = [] as ScrapperNewsDto[];
 
     if (!this.browser) {
       console.error('Browser is not initialized');
@@ -43,19 +43,21 @@ export class NewsScrapperService implements OnModuleInit, OnModuleDestroy {
       // Each news item is contained in a <tr> element with class "athing".
       // The title link is contained within an element with either the "storylink" class
       // or, more recently, within a ".titleline > a" element.
-      const newsItems: NewsItemDto[] = await page.$$eval('.athing', (rows) =>
-        rows.map((row) => {
-          const titleElement =
-            row.querySelector('.storylink') ||
-            row.querySelector('.titleline > a');
-          const title = titleElement
-            ? titleElement.textContent?.trim() || 'Unknown'
-            : 'Unknown';
-          const url = titleElement
-            ? titleElement.getAttribute('href') || ''
-            : '';
-          return { title, url };
-        }),
+      const newsItems: ScrapperNewsDto[] = await page.$$eval(
+        '.athing',
+        (rows) =>
+          rows.map((row) => {
+            const titleElement =
+              row.querySelector('.storylink') ||
+              row.querySelector('.titleline > a');
+            const title = titleElement
+              ? titleElement.textContent?.trim() || 'Unknown'
+              : 'Unknown';
+            const url = titleElement
+              ? titleElement.getAttribute('href') || ''
+              : '';
+            return { title, url };
+          }),
       );
       result = newsItems || [];
       console.log('Scraped Hacker News items:', newsItems?.length);
@@ -64,7 +66,7 @@ export class NewsScrapperService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       console.error('Error scraping Hacker News:', error);
     } finally {
-      await page.close();
+      await this.onModuleDestroy();
       console.log('Page closed after scraping');
     }
 

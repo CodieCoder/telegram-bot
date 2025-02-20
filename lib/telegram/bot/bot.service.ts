@@ -5,9 +5,9 @@ import { AxiosResponse } from 'axios';
 import { TelegramEnvDto } from 'config';
 import { TelegramUpdate } from './bot.dto';
 import { lastValueFrom, Observable } from 'rxjs';
-import { ScrapTypeDto } from 'lib/scrapper/scrapper.dto';
-import { NewsScrapperService } from 'lib/scrapper/news/scrapper.news.service';
+import { ScrapTypeEnum } from 'lib/scrapper/scrapper.dto';
 import { TelegramCommandResponses } from './constants';
+import { ScrapperService } from 'lib/scrapper/scrapper.service';
 
 @Injectable()
 export class TelegramBotService {
@@ -21,7 +21,7 @@ export class TelegramBotService {
   constructor(
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
-    private readonly scrapper: NewsScrapperService,
+    private readonly scrapper: ScrapperService,
   ) {
     const env = this.configService.get<TelegramEnvDto>('telegram');
     if (!env?.url || !env?.allowedIds?.length || !env?.token) {
@@ -34,13 +34,13 @@ export class TelegramBotService {
   }
 
   public async handleMessage(data: TelegramUpdate): Promise<void> {
-    const message = data.message.text?.trim();
-    if (!message) {
+    if (!data?.message?.text) {
       console.error('Error: No message text found in handleMessage');
       return;
     }
 
     try {
+      const message = data.message.text.trim();
       const chatId = String(data.message.chat.id);
 
       if (this.ALLOWED_CHAT_IDS.includes(chatId)) {
@@ -63,6 +63,18 @@ export class TelegramBotService {
   private async processCommand(chatId: string, command: string): Promise<void> {
     const response = await this.executeCommand(command);
     return this.sendMessage(chatId, response);
+  }
+
+  public async sendToMany(chatIds: string[], text: string) {
+    try {
+      if (!chatIds?.length || !text?.length) return;
+      else {
+        chatIds.forEach((chatId) => this.sendMessage(chatId, text));
+      }
+    } catch (error) {
+      console.log('****** ERROR *******');
+      console.log(error);
+    }
   }
 
   private async sendMessage(chatId: string, text: any): Promise<void> {
@@ -91,24 +103,31 @@ export class TelegramBotService {
   }
 
   private async executeCommand(command: string) {
-    switch (command) {
+    const formattedCommand = command.toLowerCase();
+    switch (formattedCommand) {
       case 'start':
         return TelegramCommandResponses.start;
       case 'news':
-        return this.getResource(ScrapTypeDto.News);
+        return this.getResource(ScrapTypeEnum.News);
+      case 'jobs':
+        return this.getResource(ScrapTypeEnum.News);
       default:
         return TelegramCommandResponses.default;
     }
   }
 
-  private async getResource(type: ScrapTypeDto) {
+  private async getResource(type: ScrapTypeEnum) {
     let tmp: any;
     switch (type) {
-      case ScrapTypeDto.News:
-        tmp = await this.scrapper.scrapeNews();
+      case ScrapTypeEnum.News:
+        tmp = await this.scrapper.news();
         return tmp
           ?.map((news) => `${news.title} \n ${news.url} \n \n \n`)
           .join('\n');
+          
+      case ScrapTypeEnum.Jobs:
+        tmp = await this.scrapper.jobs();
+        return tmp?.map((job) => `${job.title} \n ${job.url} \n \n \n`);
       default:
         return [];
     }

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule'; // Import your service
-import { ScrapperForNewsService } from './scrapper.news.service';
+import { ScrapperForJobsService } from './scrapper.jobs.service';
 
 @Module({
   //   imports: [
   //    , // Import the ScheduleModule to enable cron jobs
   //   ],
-  providers: [ScrapperForNewsService], // Register your service here
+  providers: [ScrapperForJobsService], // Register your service here
 })
-export class ScrapperForNewsModule {}
+export class ScrapperForJobsModule {}
